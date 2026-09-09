@@ -18,7 +18,7 @@ const REMINDER_MODES = [
   { label: 'Firm', sub: 'regular check-ins' },
   { label: 'Brutal', sub: "Bob doesn't hold back" },
 ];
-const DISTRACTING_APPS = ['Instagram', 'TikTok', 'YouTube', 'Twitter/X', 'Snapchat', 'WhatsApp', 'Reddit', 'Netflix'];
+const DISTRACTING_APPS = ['Instagram', 'TikTok', 'YouTube', 'Twitter/X', 'Snapchat', 'WhatsApp', 'Reddit', 'Netflix', 'Other'];
 
 type Props = {
   onSave: () => void;
@@ -30,6 +30,7 @@ export default function CustomizationScreen({ onSave }: Props) {
   const [studyLevel, setStudyLevel] = useState('');
   const [reminderMode, setReminderMode] = useState('');
   const [distractingApps, setDistractingApps] = useState<string[]>([]);
+  const [otherApp, setOtherApp] = useState('');
 
   function toggleApp(app: string) {
     setDistractingApps(prev =>
@@ -51,12 +52,16 @@ export default function CustomizationScreen({ onSave }: Props) {
       return;
     }
 
+    const finalApps = distractingApps
+      .map(app => (app === 'Other' ? otherApp.trim() : app))
+      .filter(app => app.length > 0);
+
     await AsyncStorage.setItem('bob_profile', JSON.stringify({
       name: name.trim(),
       studies: studies.trim(),
       studyLevel,
       reminderMode,
-      distractingApps,
+      distractingApps: finalApps,
     }));
 
     onSave();
@@ -159,6 +164,15 @@ export default function CustomizationScreen({ onSave }: Props) {
               </TouchableOpacity>
             ))}
           </View>
+          {distractingApps.includes('Other') && (
+            <TextInput
+              style={[styles.input, styles.otherInput]}
+              placeholder="Which app?"
+              placeholderTextColor="#555"
+              value={otherApp}
+              onChangeText={setOtherApp}
+            />
+          )}
         </View>
 
         {/* Save Button */}
@@ -239,6 +253,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  otherInput: {
+    marginTop: 10,
   },
   chip: {
     paddingHorizontal: 16,
