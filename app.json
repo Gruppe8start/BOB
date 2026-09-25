@@ -7,19 +7,81 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.maxschenck.bob",
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.maxschenck.bob"
+        ],
+        "com.apple.developer.family-controls": true,
+        "com.apple.developer.usernotifications.time-sensitive": true
+      },
+      "infoPlist": {
+        "NSAlarmKitUsageDescription": "Bob rings a real alarm when you stay in a distracting app past your countdown."
+      }
     },
     "android": {
+      "package": "com.maxschenck.bob",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#2B5A32",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "color": "#4CAF50",
+          "defaultChannel": "bob-nudges"
+        }
+      ],
+      [
+        "expo-widgets",
+        {
+          "bundleIdentifier": "com.maxschenck.bob.widgets",
+          "groupIdentifier": "group.com.maxschenck.bob",
+          "widgets": [
+            {
+              "name": "BobWidget",
+              "displayName": "Bob",
+              "description": "Bob, your streak and today's nudge.",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium",
+                  "accessoryCircular",
+                  "accessoryInline"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Bob",
+              "label": "Bob",
+              "description": "Bob, your streak and today's nudge.",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 2,
+              "previewImage": "./assets/bob-avatar.png",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ],
+      "@bacons/apple-targets",
+      "expo-asset"
+    ]
   }
 }

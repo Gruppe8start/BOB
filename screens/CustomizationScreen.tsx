@@ -1,16 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import BobAvatar from '../components/BobAvatar';
+import UsageConsent from '../components/UsageConsent';
+import { showAlert } from '../lib/alert';
 
 const STUDY_LEVELS = ['High School', 'University', 'Self-taught', 'Other'];
 const REMINDER_MODES = [
@@ -21,7 +24,15 @@ const REMINDER_MODES = [
 const DISTRACTING_APPS = ['Instagram', 'TikTok', 'YouTube', 'Twitter/X', 'Snapchat', 'WhatsApp', 'Reddit', 'Netflix', 'Other'];
 
 type Props = {
-  onSave: () => void;
+  onSave: (profile: {
+    name: string;
+    studies: string;
+    studyLevel: string;
+    reminderMode: string;
+    distractingApps: string[];
+    notificationsEnabled: boolean;
+    usageTrackingEnabled: boolean;
+  }) => void;
 };
 
 export default function CustomizationScreen({ onSave }: Props) {
@@ -31,6 +42,9 @@ export default function CustomizationScreen({ onSave }: Props) {
   const [reminderMode, setReminderMode] = useState('');
   const [distractingApps, setDistractingApps] = useState<string[]>([]);
   const [otherApp, setOtherApp] = useState('');
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [usageTrackingEnabled, setUsageTrackingEnabled] = useState(false);
+  const [consentVisible, setConsentVisible] = useState(false);
 
   function toggleApp(app: string) {
     setDistractingApps(prev =>
@@ -40,15 +54,15 @@ export default function CustomizationScreen({ onSave }: Props) {
 
   async function handleSave() {
     if (!name.trim()) {
-      Alert.alert("Nice try.", "Bob needs to know your name. Fill it in.");
+      showAlert("Nice try.", "Bob needs to know your name. Fill it in.");
       return;
     }
     if (!studyLevel) {
-      Alert.alert("Really?", "Pick a study level. It takes two seconds.");
+      showAlert("Really?", "Pick a study level. It takes two seconds.");
       return;
     }
     if (!reminderMode) {
-      Alert.alert("Come on.", "Choose how hard Bob should push you.");
+      showAlert("Come on.", "Choose how hard Bob should push you.");
       return;
     }
 
@@ -56,15 +70,18 @@ export default function CustomizationScreen({ onSave }: Props) {
       .map(app => (app === 'Other' ? otherApp.trim() : app))
       .filter(app => app.length > 0);
 
-    await AsyncStorage.setItem('bob_profile', JSON.stringify({
+    const profile = {
       name: name.trim(),
       studies: studies.trim(),
       studyLevel,
       reminderMode,
       distractingApps: finalApps,
-    }));
+      notificationsEnabled,
+      usageTrackingEnabled,
+    };
+    await AsyncStorage.setItem('bob_profile', JSON.stringify(profile));
 
-    onSave();
+    onSave(profile);
   }
 
   return (
@@ -76,7 +93,7 @@ export default function CustomizationScreen({ onSave }: Props) {
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.bobEmoji}>🐸</Text>
+          <BobAvatar size={112} style={styles.bobAvatar} />
           <Text style={styles.title}>Meet Bob.</Text>
           <Text style={styles.subtitle}>
             Your brutally honest, passive-aggressive study companion.{'\n'}Let's get you set up.
@@ -93,6 +110,37 @@ export default function CustomizationScreen({ onSave }: Props) {
             value={name}
             onChangeText={setName}
             autoCapitalize="words"
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>How should Bob reach you?</Text>
+          <View style={styles.permissionRow}>
+            <View style={styles.permissionCopy}>
+              <Text style={styles.permissionTitle}>Nudges and check-ins</Text>
+              <Text style={styles.permissionHint}>You can change this later in system settings.</Text>
+            </View>
+            <Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} trackColor={{ false: BORDER, true: '#4a8f4d' }} thumbColor="#fff" />
+          </View>
+          <View style={styles.permissionRow}>
+            <View style={styles.permissionCopy}>
+              <Text style={styles.permissionTitle}>Opt in to app-usage tracking</Text>
+              <Text style={styles.permissionHint}>Bob sees duration, never search terms or private content.</Text>
+            </View>
+            <Switch
+              value={usageTrackingEnabled}
+              onValueChange={on => (on ? setConsentVisible(true) : setUsageTrackingEnabled(false))}
+              trackColor={{ false: BORDER, true: '#4a8f4d' }}
+              thumbColor="#fff"
+            />
+          </View>
+          <UsageConsent
+            visible={consentVisible}
+            onAccept={() => {
+              setUsageTrackingEnabled(true);
+              setConsentVisible(false);
+            }}
+            onDecline={() => setConsentVisible(false)}
           />
         </View>
 
@@ -208,9 +256,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 36,
   },
-  bobEmoji: {
-    fontSize: 64,
-    marginBottom: 8,
+  bobAvatar: {
+    marginBottom: 14,
   },
   title: {
     fontSize: 32,
@@ -332,4 +379,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
   },
+  permissionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: CARD,
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+  },
+  permissionCopy: { flex: 1, paddingRight: 12 },
+  permissionTitle: { color: '#fff', fontSize: 14, fontWeight: '700', marginBottom: 4 },
+  permissionHint: { color: '#666', fontSize: 11, lineHeight: 16 },
 });

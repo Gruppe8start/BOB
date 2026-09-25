@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "BOB – Study Focus",
+  "version": "0.1.0",
+  "description": "Lets Bob see how long you spend on the distracting sites you chose, and ring an alarm when you stay too long.",
+  "permissions": ["tabs", "storage", "alarms", "idle", "scripting", "offscreen", "notifications"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://localhost/*", "http://127.0.0.1/*"],
+      "js": ["bridge.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["bob.png"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
