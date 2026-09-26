@@ -1,0 +1,16 @@
+{
+  "name": "kip-desktop",
+  "version": "0.1.0",
+  "description": "Kip for Windows: walks across your screen and bullies you off distracting apps. Separate from the Kip phone app.",
+  "private": true,
+  "main": "src/main.js",
+  "scripts": {
+    "start": "node scripts/start.js"
+  },
+  "devDependencies": {
+    "electron": "^44.4.5"
+  },
+  "dependencies": {
+    "koffi": "^3.3.1"
+  }
+}
