@@ -22,7 +22,9 @@ import {
   type UsageAccess,
 } from '../lib/usage';
 import { buildWidgetProps } from '../lib/widget';
-import BobAvatar from './BobAvatar';
+import { useKip } from '../lib/kipContext';
+import KipAvatar from './KipAvatar';
+import ProLock from './ProLock';
 import UsageConsent from './UsageConsent';
 
 type Props = {
@@ -39,6 +41,7 @@ const COOLDOWNS = [5, 10, 15];
 const isWeb = Platform.OS === 'web';
 
 export default function ReachPanel({ profile, streak, onProfileChange, onPermissionsChanged }: Props) {
+  const { ent } = useKip();
   const [notifGranted, setNotifGranted] = useState(false);
   const [usageAccess, setUsageAccess] = useState<UsageAccess>('unavailable');
   const [alarm, setAlarm] = useState<AlarmSettings | null>(null);
@@ -121,7 +124,7 @@ export default function ReachPanel({ profile, streak, onProfileChange, onPermiss
     setAlarm(next);
     await saveAlarmSettings(next);
     try {
-      await applyDistractionWatch(profile, next);
+      await applyDistractionWatch(profile, { ...next, enabled: next.enabled && ent.pro });
     } catch (error) {
       showAlert("Kip couldn't start watching", String(error));
     }
@@ -235,6 +238,12 @@ export default function ReachPanel({ profile, streak, onProfileChange, onPermiss
         )}
       </Row>
 
+      {!ent.pro ? (
+        <ProLock
+          feature="Distraction alarm"
+          detail="Open a distracting app and a countdown starts. Stay too long and a real alarm rings (AlarmKit on iOS 26+, full-screen alert on Android). Everywhere else it falls back to a normal notification."
+        />
+      ) : (
       <Row
         icon="⏰"
         title="Distraction alarm"
@@ -276,6 +285,7 @@ export default function ReachPanel({ profile, streak, onProfileChange, onPermiss
           </View>
         )}
       </Row>
+      )}
 
       <Row
         icon="□"
@@ -307,7 +317,7 @@ function WidgetPreview({ profile, streak }: { profile: BobProfile; streak: Strea
   return (
     <View style={styles.widget}>
       <View style={styles.widgetTop}>
-        <BobAvatar size={40} style={styles.widgetFace} />
+        <KipAvatar size={40} style={styles.widgetFace} />
         <View style={styles.widgetStreak}>
           <Text style={[styles.widgetCount, props.atRisk && styles.widgetCountRisk]}>{props.streak}</Text>
           <Text style={styles.widgetLabel}>DAY STREAK</Text>

@@ -11,6 +11,14 @@ export const KEYS = {
   sessionTemplates: 'bob_session_templates',
   sessionLogs: 'bob_session_logs',
   usageHistory: 'bob_usage_history',
+  subscription: 'kip_subscription',
+  personality: 'kip_personality',
+  kipLook: 'kip_look',
+  exams: 'kip_exams',
+  referral: 'kip_referral',
+  calendar: 'kip_calendar',
+  sageState: 'kip_sage_state',
+  sageSafety: 'kip_sage_safety_log',
 } as const;
 
 export async function readJson<T>(key: string, fallback: T): Promise<T> {

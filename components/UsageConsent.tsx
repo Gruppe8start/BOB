@@ -1,5 +1,5 @@
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import BobAvatar from './BobAvatar';
+import KipAvatar from './KipAvatar';
 
 type Props = {
   visible: boolean;
@@ -27,7 +27,7 @@ export default function UsageConsent({ visible, onAccept, onDecline }: Props) {
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
           <ScrollView>
-            <BobAvatar size={80} style={styles.face} />
+            <KipAvatar size={80} style={styles.face} />
             <Text style={styles.title}>Let Kip check on you?</Text>
             <Text style={styles.lead}>
               This is you keeping an eye on yourself. Nobody else sees it. You can turn it off any time,

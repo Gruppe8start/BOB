@@ -9,9 +9,14 @@ import {
   View,
 } from 'react-native';
 import type { BobProfile } from '../App';
-import BobAvatar from '../components/BobAvatar';
 import BobPopup from '../components/BobPopup';
+import ExamsCard from '../components/ExamsCard';
+import FreeTimeCard from '../components/FreeTimeCard';
+import KipAvatar from '../components/KipAvatar';
+import ProLock from '../components/ProLock';
 import type { Trigger } from '../lib/bobVoice';
+import { freeSlots, looksLikeExam, type CalendarEvent } from '../lib/calendar';
+import { useKip } from '../lib/kipContext';
 import {
   focusMinutes,
   formatMinutes,
@@ -34,6 +39,10 @@ type Props = {
   logs: SessionLog[];
   /** Only the visible tab evaluates popup triggers. */
   active: boolean;
+  exam: { name: string; days: number } | null;
+  sageLimit: { cardLine: string; minutes: number; target: number } | null;
+  calendarEvents: CalendarEvent[];
+  calendarConnected: boolean;
   onSessionFinished: (log: SessionLog) => Promise<StreakState>;
 };
 
@@ -57,7 +66,10 @@ function formatClock(totalSec: number) {
   return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
 }
 
-export default function HomeScreen({ profile, streak, usage, logs, active, onSessionFinished }: Props) {
+export default function HomeScreen({
+  profile, streak, usage, logs, active, exam, sageLimit, calendarEvents, calendarConnected, onSessionFinished,
+}: Props) {
+  const { ent } = useKip();
   const [templates, setTemplates] = useState<SessionTemplate[]>([]);
   const [run, setRun] = useState<Run | null>(null);
   const [popup, setPopup] = useState<PopupEvent | null>(null);
@@ -126,6 +138,8 @@ export default function HomeScreen({ profile, streak, usage, logs, active, onSes
         isFocusing: run?.endsAt != null,
         idleMs: Date.now() - lastInteraction.current,
         shown: shownTriggers.current,
+        exam,
+        sageLimit,
       });
       if (!event) return;
       shownTriggers.current.add(event.trigger);
@@ -133,7 +147,7 @@ export default function HomeScreen({ profile, streak, usage, logs, active, onSes
       setPopup(event);
     }, TRIGGER_CHECK_MS);
     return () => clearInterval(timer);
-  }, [active, popup, profile, streak, usage, run?.endsAt]);
+  }, [active, popup, profile, streak, usage, run?.endsAt, exam, sageLimit]);
 
   function startSession(template: SessionTemplate) {
     const now = Date.now();
@@ -194,7 +208,7 @@ export default function HomeScreen({ profile, streak, usage, logs, active, onSes
             <Text style={styles.eyebrow}>STUDY FOCUS / TODAY</Text>
             <Text style={styles.greeting}>Hey, {profile.name}.</Text>
           </View>
-          <BobAvatar size={56} />
+          <KipAvatar size={56} />
         </View>
 
         <View style={styles.todayRow}>
@@ -210,7 +224,9 @@ export default function HomeScreen({ profile, streak, usage, logs, active, onSes
             <>
               <Text style={styles.cardKicker}>{run.endsAt === null ? 'PAUSED' : 'IN SESSION'}</Text>
               <Text style={styles.mission}>{run.name}</Text>
-              <Text style={styles.missionSub}>{formatMinutes(run.plannedMinutes)} · {profile.reminderMode} mode</Text>
+              <Text style={styles.missionSub}>
+                {formatMinutes(run.plannedMinutes)} · {profile.reminderMode} mode
+              </Text>
               <Text style={styles.timer}>{formatClock(run.remainingSec)}</Text>
               <View style={styles.progressTrack}>
                 <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
@@ -239,6 +255,21 @@ export default function HomeScreen({ profile, streak, usage, logs, active, onSes
             </>
           )}
         </View>
+
+        {ent.pro ? (
+          <>
+            <ExamsCard suggestions={calendarEvents.filter(looksLikeExam)} />
+            {calendarConnected && (
+              <FreeTimeCard
+                slots={freeSlots(calendarEvents)}
+                canStart={!run && templates.length > 0}
+                onStartNow={() => templates[0] && startSession(templates[0])}
+              />
+            )}
+          </>
+        ) : (
+          <ProLock feature="Exam countdowns & calendar" detail="Add your exam dates and Kip counts down, nudging harder as they get close. Connect your calendar to find free study time." />
+        )}
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>My sessions</Text>

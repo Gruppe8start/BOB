@@ -81,7 +81,14 @@
         }
       ],
       "@bacons/apple-targets",
-      "expo-asset"
+      "expo-asset",
+      "expo-secure-store",
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "Kip reads your calendar to find exam dates and free time to study. Nothing is changed or uploaded."
+        }
+      ]
     ]
   }
 }

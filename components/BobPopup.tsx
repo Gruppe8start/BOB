@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { PopupEvent } from '../lib/triggers';
-import BobAvatar from './BobAvatar';
+import KipAvatar from './KipAvatar';
 
 type Props = {
   event: PopupEvent | null;
@@ -56,7 +56,7 @@ export default function BobPopup({ event, onAction, onDismiss }: Props) {
         </View>
       )}
       <Animated.View style={[styles.face, { transform: [{ translateY }, { rotate }] }]}>
-        <BobAvatar size={64} />
+        <KipAvatar size={64} sage={event?.sage} />
       </Animated.View>
     </Animated.View>
   );

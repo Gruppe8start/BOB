@@ -11,9 +11,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import BobAvatar from '../components/BobAvatar';
+import KipAvatar from '../components/KipAvatar';
 import UsageConsent from '../components/UsageConsent';
 import { showAlert } from '../lib/alert';
+import { loadAlarmSettings, saveAlarmSettings } from '../lib/distractionAlarm';
 
 const STUDY_LEVELS = ['High School', 'University', 'Self-taught', 'Other'];
 const REMINDER_MODES = [
@@ -32,6 +33,7 @@ type Props = {
     distractingApps: string[];
     notificationsEnabled: boolean;
     usageTrackingEnabled: boolean;
+    alarmOptIn?: boolean;
   }) => void;
 };
 
@@ -45,6 +47,7 @@ export default function CustomizationScreen({ onSave }: Props) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [usageTrackingEnabled, setUsageTrackingEnabled] = useState(false);
   const [consentVisible, setConsentVisible] = useState(false);
+  const [alarmOptIn, setAlarmOptIn] = useState(false);
 
   function toggleApp(app: string) {
     setDistractingApps(prev =>
@@ -78,8 +81,14 @@ export default function CustomizationScreen({ onSave }: Props) {
       distractingApps: finalApps,
       notificationsEnabled,
       usageTrackingEnabled,
+      alarmOptIn,
     };
     await AsyncStorage.setItem('bob_profile', JSON.stringify(profile));
+    if (alarmOptIn) {
+      // Stored as opted in; it only runs once the plan includes it and usage access is granted.
+      const settings = await loadAlarmSettings(reminderMode);
+      await saveAlarmSettings({ ...settings, enabled: true });
+    }
 
     onSave(profile);
   }
@@ -93,7 +102,7 @@ export default function CustomizationScreen({ onSave }: Props) {
 
         {/* Header */}
         <View style={styles.header}>
-          <BobAvatar size={112} style={styles.bobAvatar} />
+          <KipAvatar size={112} style={styles.bobAvatar} />
           <Text style={styles.title}>Meet Kip.</Text>
           <Text style={styles.subtitle}>
             Your brutally honest, passive-aggressive study companion.{'\n'}Let's get you set up.
@@ -133,6 +142,13 @@ export default function CustomizationScreen({ onSave }: Props) {
               trackColor={{ false: BORDER, true: '#4a8f4d' }}
               thumbColor="#fff"
             />
+          </View>
+          <View style={styles.permissionRow}>
+            <View style={styles.permissionCopy}>
+              <Text style={styles.permissionTitle}>Distraction alarm (Pro)</Text>
+              <Text style={styles.permissionHint}>A real alarm if you stay too long in a distracting app. Needs usage tracking; you'll be asked for alarm permission later.</Text>
+            </View>
+            <Switch value={alarmOptIn} onValueChange={setAlarmOptIn} trackColor={{ false: BORDER, true: '#4a8f4d' }} thumbColor="#fff" />
           </View>
           <UsageConsent
             visible={consentVisible}

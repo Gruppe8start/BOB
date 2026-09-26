@@ -15,6 +15,8 @@ export type BobProfile = {
   distractingApps: string[];
   notificationsEnabled: boolean;
   usageTrackingEnabled: boolean;
+  /** Opted in to the (Pro) distraction alarm during onboarding. */
+  alarmOptIn?: boolean;
 };
 
 export default function App() {

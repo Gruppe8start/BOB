@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BobProfile } from '../App';
-import BobAvatar from '../components/BobAvatar';
+import KipAvatar from '../components/KipAvatar';
+import InsightsPanel from '../components/InsightsPanel';
 import { focusMinutes, formatMinutes, lastDays, logsForDay, type SessionLog } from '../lib/sessions';
 import { dayKey } from '../lib/storage';
 import type { StreakState } from '../lib/streak';
@@ -79,7 +80,7 @@ export default function StatsScreen({ profile, streak, usage, usageHistory, logs
         <Text style={styles.title}>Your day</Text>
 
         <View style={styles.verdict}>
-          <BobAvatar size={44} />
+          <KipAvatar size={44} />
           <Text style={styles.verdictText}>{kipVerdict(todayFocus, distracted, profile.reminderMode)}</Text>
         </View>
 
@@ -183,6 +184,8 @@ export default function StatsScreen({ profile, streak, usage, usageHistory, logs
           </View>
           <Text style={styles.hint}>Tap a day for details.</Text>
         </Section>
+
+        <InsightsPanel logs={logs} usageHistory={usageHistory} />
 
         {/* Today's sessions */}
         <Section title="Today's sessions">

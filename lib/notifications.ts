@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 import type { BobProfile } from '../App';
 import { bobLine, type Trigger } from './bobVoice';
 import { dayKey, KEYS, readJson, writeJson } from './storage';
+import { urgencyFor } from './exams';
 import { studiedToday, type StreakState } from './streak';
 
 const CHANNEL_ID = 'bob-nudges';
@@ -103,7 +104,7 @@ export function listenForNudgeTaps() {
   });
 }
 
-async function scheduleNudge(title: string, body: string, trigger: Trigger, fireAt: number): Promise<string> {
+export async function scheduleNudge(title: string, body: string, trigger: Trigger, fireAt: number): Promise<string> {
   if (Platform.OS === 'web') {
     const id = `web-${Date.now()}-${nextWebId++}`;
     webTimers.set(id, setTimeout(() => {
@@ -130,7 +131,7 @@ async function scheduleNudge(title: string, body: string, trigger: Trigger, fire
   });
 }
 
-async function cancelNudge(id: string) {
+export async function cancelNudge(id: string) {
   if (id.startsWith('web-')) {
     clearTimeout(webTimers.get(id));
     webTimers.delete(id);
@@ -202,7 +203,9 @@ function settleFiredNudges(stats: NudgeStats, now: number): NudgeStats {
  * per-day cap and backing off when the user keeps ignoring them. Call it whenever
  * the app is opened or the user finishes a study block.
  */
-export async function replanNudges(profile: BobProfile, streak: StreakState) {
+export type ExamContext = { name: string; days: number } | null;
+
+export async function replanNudges(profile: BobProfile, streak: StreakState, exam: ExamContext = null) {
   const previous = await readJson<NudgeStats>(KEYS.nudgeStats, EMPTY_STATS);
   const stats = settleFiredNudges(previous, Date.now());
   for (const nudge of previous.planned) await cancelNudge(nudge.id);
@@ -214,8 +217,12 @@ export async function replanNudges(profile: BobProfile, streak: StreakState) {
 
   const mode = profile.reminderMode;
   const backOff = stats.ignoredStreak >= 6 ? 2 : stats.ignoredStreak >= 3 ? 1 : 0;
-  const dailyCap = Math.max(1, Math.min(MAX_PER_DAY, (BASE_CAP[mode] ?? 2) - backOff));
-  const gapHours = (BASE_INACTIVITY_HOURS[mode] ?? 8) * (1 + Math.min(stats.ignoredStreak, 6) * 0.25);
+  // Exam countdown (Pro): nudges get more frequent as the exam approaches, never above the hard cap.
+  const urgency = urgencyFor(exam?.days ?? null);
+  const examBoost = urgency === 'close' || urgency === 'imminent' ? 1 : 0;
+  const examGap = urgency === 'imminent' ? 0.4 : urgency === 'close' ? 0.6 : urgency === 'soon' ? 0.8 : 1;
+  const dailyCap = Math.max(1, Math.min(MAX_PER_DAY, (BASE_CAP[mode] ?? 2) - backOff + examBoost));
+  const gapHours = (BASE_INACTIVITY_HOURS[mode] ?? 8) * (1 + Math.min(stats.ignoredStreak, 6) * 0.25) * examGap;
   const now = Date.now();
 
   // Streak-at-risk nudges come first so the cap never crowds them out.
@@ -226,6 +233,10 @@ export async function replanNudges(profile: BobProfile, streak: StreakState) {
       if (mode === 'Brutal') candidates.push({ fireAt: atTime(0, 21, 45), trigger: 'streakAtRisk' });
     }
     candidates.push({ fireAt: atTime(1, 20, 0), trigger: 'streakAtRisk' });
+  }
+  if (exam && urgency !== 'none') {
+    candidates.push({ fireAt: atTime(0, 9, 30), trigger: 'examSoon' });
+    candidates.push({ fireAt: atTime(1, 9, 30), trigger: 'examSoon' });
   }
   candidates.push({ fireAt: clampToWakingHours(now + gapHours * 3_600_000), trigger: 'inactivity' });
   candidates.push({ fireAt: clampToWakingHours(now + 2 * gapHours * 3_600_000), trigger: 'inactivity' });
@@ -239,7 +250,8 @@ export async function replanNudges(profile: BobProfile, streak: StreakState) {
     const day = dayKey(new Date(candidate.fireAt));
     if ((perDay[day] ?? 0) >= dailyCap) continue;
 
-    const line = bobLine(candidate.trigger, mode, { name: profile.name, streak: streak.count });
+    const examDays = exam ? exam.days - (dayKey(new Date(candidate.fireAt)) === dayKey() ? 0 : 1) : 0;
+    const line = bobLine(candidate.trigger, mode, { name: profile.name, streak: streak.count, exam: exam?.name ?? '', days: examDays });
     const id = await scheduleNudge(line.title, line.body, candidate.trigger, candidate.fireAt);
     perDay[day] = (perDay[day] ?? 0) + 1;
     planned.push({ id, fireAt: candidate.fireAt, trigger: candidate.trigger });
