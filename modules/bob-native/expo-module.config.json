@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["BobNativeModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.bobnative.BobNativeModule"]
+  }
+}

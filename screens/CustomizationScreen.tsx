@@ -1,27 +1,40 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import KipAvatar from '../components/KipAvatar';
+import UsageConsent from '../components/UsageConsent';
+import { showAlert } from '../lib/alert';
+import { loadAlarmSettings, saveAlarmSettings } from '../lib/distractionAlarm';
 
 const STUDY_LEVELS = ['High School', 'University', 'Self-taught', 'Other'];
 const REMINDER_MODES = [
   { label: 'Chill', sub: 'gentle nudges' },
   { label: 'Firm', sub: 'regular check-ins' },
-  { label: 'Brutal', sub: "Bob doesn't hold back" },
+  { label: 'Brutal', sub: "Kip doesn't hold back" },
 ];
 const DISTRACTING_APPS = ['Instagram', 'TikTok', 'YouTube', 'Twitter/X', 'Snapchat', 'WhatsApp', 'Reddit', 'Netflix', 'Other'];
 
 type Props = {
-  onSave: () => void;
+  onSave: (profile: {
+    name: string;
+    studies: string;
+    studyLevel: string;
+    reminderMode: string;
+    distractingApps: string[];
+    notificationsEnabled: boolean;
+    usageTrackingEnabled: boolean;
+    alarmOptIn?: boolean;
+  }) => void;
 };
 
 export default function CustomizationScreen({ onSave }: Props) {
@@ -31,6 +44,10 @@ export default function CustomizationScreen({ onSave }: Props) {
   const [reminderMode, setReminderMode] = useState('');
   const [distractingApps, setDistractingApps] = useState<string[]>([]);
   const [otherApp, setOtherApp] = useState('');
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [usageTrackingEnabled, setUsageTrackingEnabled] = useState(false);
+  const [consentVisible, setConsentVisible] = useState(false);
+  const [alarmOptIn, setAlarmOptIn] = useState(false);
 
   function toggleApp(app: string) {
     setDistractingApps(prev =>
@@ -40,15 +57,15 @@ export default function CustomizationScreen({ onSave }: Props) {
 
   async function handleSave() {
     if (!name.trim()) {
-      Alert.alert("Nice try.", "Bob needs to know your name. Fill it in.");
+      showAlert("Nice try.", "Kip needs to know your name. Fill it in.");
       return;
     }
     if (!studyLevel) {
-      Alert.alert("Really?", "Pick a study level. It takes two seconds.");
+      showAlert("Really?", "Pick a study level. It takes two seconds.");
       return;
     }
     if (!reminderMode) {
-      Alert.alert("Come on.", "Choose how hard Bob should push you.");
+      showAlert("Come on.", "Choose how hard Kip should push you.");
       return;
     }
 
@@ -56,15 +73,24 @@ export default function CustomizationScreen({ onSave }: Props) {
       .map(app => (app === 'Other' ? otherApp.trim() : app))
       .filter(app => app.length > 0);
 
-    await AsyncStorage.setItem('bob_profile', JSON.stringify({
+    const profile = {
       name: name.trim(),
       studies: studies.trim(),
       studyLevel,
       reminderMode,
       distractingApps: finalApps,
-    }));
+      notificationsEnabled,
+      usageTrackingEnabled,
+      alarmOptIn,
+    };
+    await AsyncStorage.setItem('bob_profile', JSON.stringify(profile));
+    if (alarmOptIn) {
+      // Stored as opted in; it only runs once the plan includes it and usage access is granted.
+      const settings = await loadAlarmSettings(reminderMode);
+      await saveAlarmSettings({ ...settings, enabled: true });
+    }
 
-    onSave();
+    onSave(profile);
   }
 
   return (
@@ -76,8 +102,8 @@ export default function CustomizationScreen({ onSave }: Props) {
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.bobEmoji}>🐸</Text>
-          <Text style={styles.title}>Meet Bob.</Text>
+          <KipAvatar size={112} style={styles.bobAvatar} />
+          <Text style={styles.title}>Meet Kip.</Text>
           <Text style={styles.subtitle}>
             Your brutally honest, passive-aggressive study companion.{'\n'}Let's get you set up.
           </Text>
@@ -93,6 +119,44 @@ export default function CustomizationScreen({ onSave }: Props) {
             value={name}
             onChangeText={setName}
             autoCapitalize="words"
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>How should Kip reach you?</Text>
+          <View style={styles.permissionRow}>
+            <View style={styles.permissionCopy}>
+              <Text style={styles.permissionTitle}>Nudges and check-ins</Text>
+              <Text style={styles.permissionHint}>You can change this later in system settings.</Text>
+            </View>
+            <Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} trackColor={{ false: BORDER, true: '#4a8f4d' }} thumbColor="#fff" />
+          </View>
+          <View style={styles.permissionRow}>
+            <View style={styles.permissionCopy}>
+              <Text style={styles.permissionTitle}>Opt in to app-usage tracking</Text>
+              <Text style={styles.permissionHint}>Kip sees duration, never search terms or private content.</Text>
+            </View>
+            <Switch
+              value={usageTrackingEnabled}
+              onValueChange={on => (on ? setConsentVisible(true) : setUsageTrackingEnabled(false))}
+              trackColor={{ false: BORDER, true: '#4a8f4d' }}
+              thumbColor="#fff"
+            />
+          </View>
+          <View style={styles.permissionRow}>
+            <View style={styles.permissionCopy}>
+              <Text style={styles.permissionTitle}>Distraction alarm (Pro)</Text>
+              <Text style={styles.permissionHint}>A real alarm if you stay too long in a distracting app. Needs usage tracking; you'll be asked for alarm permission later.</Text>
+            </View>
+            <Switch value={alarmOptIn} onValueChange={setAlarmOptIn} trackColor={{ false: BORDER, true: '#4a8f4d' }} thumbColor="#fff" />
+          </View>
+          <UsageConsent
+            visible={consentVisible}
+            onAccept={() => {
+              setUsageTrackingEnabled(true);
+              setConsentVisible(false);
+            }}
+            onDecline={() => setConsentVisible(false)}
           />
         </View>
 
@@ -128,7 +192,7 @@ export default function CustomizationScreen({ onSave }: Props) {
 
         {/* Reminder Mode */}
         <View style={styles.section}>
-          <Text style={styles.label}>How hard should Bob push you?</Text>
+          <Text style={styles.label}>How hard should Kip push you?</Text>
           <View style={styles.cardRow}>
             {REMINDER_MODES.map(mode => (
               <TouchableOpacity
@@ -150,7 +214,7 @@ export default function CustomizationScreen({ onSave }: Props) {
         {/* Distracting Apps */}
         <View style={styles.section}>
           <Text style={styles.label}>Which apps distract you?</Text>
-          <Text style={styles.hint}>Bob will keep an eye on these.</Text>
+          <Text style={styles.hint}>Kip will keep an eye on these.</Text>
           <View style={styles.chipRow}>
             {DISTRACTING_APPS.map(app => (
               <TouchableOpacity
@@ -208,9 +272,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 36,
   },
-  bobEmoji: {
-    fontSize: 64,
-    marginBottom: 8,
+  bobAvatar: {
+    marginBottom: 14,
   },
   title: {
     fontSize: 32,
@@ -332,4 +395,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
   },
+  permissionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: CARD,
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+  },
+  permissionCopy: { flex: 1, paddingRight: 12 },
+  permissionTitle: { color: '#fff', fontSize: 14, fontWeight: '700', marginBottom: 4 },
+  permissionHint: { color: '#666', fontSize: 11, lineHeight: 16 },
 });
