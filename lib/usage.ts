@@ -33,6 +33,8 @@ export type UsageSummary = {
   totalMinutes: number;
   /** Android and web only: iOS reports usage for the whole selection, never per app. */
   topApp?: { label: string; minutes: number };
+  /** Minutes per app label, same platforms as topApp. */
+  perApp?: Record<string, number>;
 };
 
 export function usageTrackingSupported() {
@@ -117,6 +119,7 @@ function summarize(minutesByKey: Record<string, number>, labels: Record<string, 
   return {
     totalMinutes,
     topApp: top && top[1] >= 1 ? { label: top[0], minutes: Math.round(top[1]) } : undefined,
+    perApp: Object.fromEntries(entries.map(([label, m]) => [label, Math.round(m)])),
   };
 }
 

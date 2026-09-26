@@ -21,7 +21,7 @@ const DEFAULT_STATE = {
     cooldownMinutes: 10,
     alarmEnabled: false,
     alarmTitle: 'Close it.',
-    alarmBody: 'Bob said close {app}.',
+    alarmBody: 'Kip said close {app}.',
   },
   usage: { day: '', perDomain: {} },
   current: null, // { domain, tabId, since }
@@ -185,7 +185,7 @@ async function showOverlay(tabId, config, domain) {
           'font-family:system-ui,sans-serif;text-align:center;padding:24px';
         const face = document.createElement('img');
         face.src = bobUrl;
-        face.alt = 'Bob';
+        face.alt = 'Kip';
         face.style.cssText = 'width:160px;height:160px;border-radius:36px;box-shadow:0 10px 40px rgba(0,0,0,.6)';
         const h = document.createElement('div');
         h.textContent = title;

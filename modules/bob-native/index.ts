@@ -6,7 +6,7 @@ export type ScreenTimeStatus = 'approved' | 'denied' | 'notDetermined';
 export type WatchConfig = {
   /** Android package names of the distracting apps, e.g. "com.instagram.android". */
   packages: string[];
-  /** Package name -> human label, used in Bob's alarm text. */
+  /** Package name -> human label, used in Kip's alarm text. */
   labels: Record<string, string>;
   countdownSeconds: number;
   cooldownMinutes: number;

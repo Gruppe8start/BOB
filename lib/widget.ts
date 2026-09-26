@@ -12,13 +12,13 @@ export type BobWidgetProps = {
 const AT_RISK_HOUR = 20;
 
 function nudgeFor(profile: BobProfile | null, streak: StreakState, atRisk: boolean) {
-  if (studiedToday(streak)) return 'Studied today. Bob is quietly impressed.';
+  if (studiedToday(streak)) return 'Studied today. Kip is quietly impressed.';
   if (atRisk && streak.count > 0) {
     return profile?.reminderMode === 'Brutal'
       ? `${streak.count} days. Gone at midnight.`
       : `Your ${streak.count}-day streak ends at midnight.`;
   }
-  return profile?.name ? `No study yet, ${profile.name}. Bob is watching.` : 'No study yet. Bob is watching.';
+  return profile?.name ? `No study yet, ${profile.name}. Kip is watching.` : 'No study yet. Kip is watching.';
 }
 
 export function buildWidgetProps(profile: BobProfile | null, streak: StreakState, at = new Date()): BobWidgetProps {
@@ -48,7 +48,7 @@ export async function updateWidgets(profile: BobProfile | null, streak: StreakSt
       const { requestWidgetUpdate } = require('react-native-android-widget');
       const { BobAndroidWidget } = require('../widgets/BobAndroidWidget');
       await requestWidgetUpdate({
-        widgetName: 'Bob',
+        widgetName: 'Kip',
         renderWidget: () => createElement(BobAndroidWidget, buildWidgetProps(profile, streak)),
         widgetNotFound: () => {},
       });

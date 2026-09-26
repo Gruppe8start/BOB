@@ -9,7 +9,7 @@ type Props = {
   onDismiss: () => void;
 };
 
-/** Bob sliding into the bottom-right corner of the screen. In-app only, both platforms. */
+/** Kip sliding into the bottom-right corner of the screen. In-app only, both platforms. */
 export default function BobPopup({ event, onAction, onDismiss }: Props) {
   const slide = useRef(new Animated.Value(0)).current;
   const bob = useRef(new Animated.Value(0)).current;

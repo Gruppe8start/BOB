@@ -24,7 +24,7 @@ export type TriggerContext = {
   shown: Set<Trigger>;
 };
 
-/** Decides whether Bob should pop into the corner right now, and with what. */
+/** Decides whether Kip should pop into the corner right now, and with what. */
 export function evaluateTriggers(ctx: TriggerContext): PopupEvent | null {
   const { profile, streak, usage, isFocusing, idleMs, shown } = ctx;
   if (isFocusing) return null;

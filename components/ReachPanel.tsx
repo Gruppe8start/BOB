@@ -66,7 +66,7 @@ export default function ReachPanel({ profile, streak, onProfileChange, onPermiss
     const granted = await ensureNotificationPermission();
     if (!granted) {
       if (!isWeb) {
-        showAlert('Blocked', 'Notifications are off for BOB. Turn them on in system settings.');
+        showAlert('Blocked', 'Notifications are off for Kip. Turn them on in system settings.');
       } else if (Notification.permission === 'denied') {
         showAlert(
           'Notifications are blocked',
@@ -98,7 +98,7 @@ export default function ReachPanel({ profile, streak, onProfileChange, onPermiss
     setUsageAccess(access);
     if (isWeb && access !== 'granted') {
       showAlert(
-        "Bob can't find the extension",
+        "Kip can't find the extension",
         'Install it with the steps below. If it is already installed, check it is switched on in chrome://extensions, then reload this page (Ctrl+R).'
       );
     }
@@ -115,7 +115,7 @@ export default function ReachPanel({ profile, streak, onProfileChange, onPermiss
     if (next.enabled && !alarm?.enabled) {
       const ok = await requestAlarmPermission();
       if (!ok && Platform.OS === 'ios') {
-        showAlert('Alarms not allowed', 'Allow BOB to schedule alarms in Settings, or Bob falls back to notifications.');
+        showAlert('Alarms not allowed', 'Allow Kip to schedule alarms in Settings, or Kip falls back to notifications.');
       }
     }
     setAlarm(next);
@@ -123,14 +123,14 @@ export default function ReachPanel({ profile, streak, onProfileChange, onPermiss
     try {
       await applyDistractionWatch(profile, next);
     } catch (error) {
-      showAlert("Bob couldn't start watching", String(error));
+      showAlert("Kip couldn't start watching", String(error));
     }
     refresh();
   }
 
   async function runTestAlarm() {
     const ok = await testAlarm();
-    if (!ok) showAlert('Not allowed', isWeb ? 'Is the BOB extension installed and enabled?' : 'Allow alarms for BOB in Settings.');
+    if (!ok) showAlert('Not allowed', isWeb ? 'Is the Kip extension installed and enabled?' : 'Allow alarms for Kip in Settings.');
     else if (!isWeb) showAlert('Armed', 'A real alarm rings in 10 seconds. Try silent mode.');
   }
 
@@ -153,15 +153,15 @@ export default function ReachPanel({ profile, streak, onProfileChange, onPermiss
       ? 'Needs a development build (not Expo Go).'
       : usageStatus === 'off'
         ? isWeb
-          ? 'Off. Opt in to let Bob see time spent on your distracting sites.'
-          : 'Off. Opt in to let Bob see time spent in your distracting apps.'
+          ? 'Off. Opt in to let Kip see time spent on your distracting sites.'
+          : 'Off. Opt in to let Kip see time spent in your distracting apps.'
         : usageAccess === 'needs-app-selection'
           ? 'Pick your distracting apps in the Screen Time list.'
           : usageAccess === 'needs-permission'
             ? isWeb
-              ? 'Install the BOB browser extension (Chrome or Edge) so Bob can see your tabs.'
+              ? 'Install the Kip browser extension (Chrome or Edge) so Kip can see your tabs.'
               : Platform.OS === 'android'
-                ? 'Grant Usage Access to BOB in system settings.'
+                ? 'Grant Usage Access to Kip in system settings.'
                 : 'Allow Screen Time access.'
             : 'On. Duration only, never content or searches.';
 
@@ -172,17 +172,17 @@ export default function ReachPanel({ profile, streak, onProfileChange, onPermiss
       : Platform.OS === 'ios'
         ? support === 'alarmkit'
           ? 'AlarmKit: rings through Silent and Focus once you pass the countdown in your distracting apps.'
-          : 'Needs iOS 26 for a real alarm. On this iPhone Bob sends a time-sensitive notification instead.'
+          : 'Needs iOS 26 for a real alarm. On this iPhone Kip sends a time-sensitive notification instead.'
         : fullScreenOk
           ? 'Rings until you leave the app. Reopen it during the cooldown and it rings again right away.'
-          : 'Allow full-screen alerts for the loudest version. Without it Bob uses a heads-up alert.';
+          : 'Allow full-screen alerts for the loudest version. Without it Kip uses a heads-up alert.';
 
   return (
     <View>
       <Row
         icon="◉"
         title="In-app nudges"
-        text="Bob pops into the corner when you idle, your streak is at risk, or you finish a block."
+        text="Kip pops into the corner when you idle, your streak is at risk, or you finish a block."
         status="ready"
       />
 
@@ -193,10 +193,10 @@ export default function ReachPanel({ profile, streak, onProfileChange, onPermiss
           !notificationsSupported
             ? "This browser doesn't support notifications."
             : notifReady
-              ? `Max ${profile.reminderMode === 'Brutal' ? 3 : profile.reminderMode === 'Firm' ? 2 : 1}/day, fewer if you ignore them.${isWeb ? ' Delivered while a BOB tab is open.' : ''}`
+              ? `Max ${profile.reminderMode === 'Brutal' ? 3 : profile.reminderMode === 'Firm' ? 2 : 1}/day, fewer if you ignore them.${isWeb ? ' Delivered while a Kip tab is open.' : ''}`
               : isWeb
-                ? 'Inactivity and streak-at-risk nudges while BOB is in a background tab.'
-                : 'Inactivity and streak-at-risk nudges when BOB is closed.'
+                ? 'Inactivity and streak-at-risk nudges while Kip is in a background tab.'
+                : 'Inactivity and streak-at-risk nudges when Kip is closed.'
         }
         status={!notificationsSupported ? 'unavailable' : notifReady ? 'ready' : 'action'}
         actionLabel="Allow"
@@ -282,9 +282,9 @@ export default function ReachPanel({ profile, streak, onProfileChange, onPermiss
         title="Home screen widget"
         text={
           Platform.OS === 'ios'
-            ? 'Long-press your home screen → + → BOB. Shows Bob, your streak and today’s nudge.'
+            ? 'Long-press your home screen → + → Kip. Shows Kip, your streak and today’s nudge.'
             : Platform.OS === 'android'
-              ? 'Long-press your home screen → Widgets → BOB. Tap it to jump back in.'
+              ? 'Long-press your home screen → Widgets → Kip. Tap it to jump back in.'
               : 'Browsers have no home screen widgets. This is how it looks on your phone:'
         }
         status={isWeb ? 'unavailable' : BobNative ? 'ready' : 'unavailable'}

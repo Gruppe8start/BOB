@@ -113,7 +113,7 @@ enum BobAlarm {
       secondaryIntent: nil,
       sound: .default
     )
-    // The system caps concurrently scheduled alarms per app: Bob keeps at most one.
+    // The system caps concurrently scheduled alarms per app: Kip keeps at most one.
     for alarm in (try? AlarmManager.shared.alarms) ?? [] {
       try? AlarmManager.shared.cancel(id: alarm.id)
     }

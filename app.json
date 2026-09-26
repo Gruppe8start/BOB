@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "BOB",
+    "name": "Kip",
     "slug": "BOB",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -17,7 +17,7 @@
         "com.apple.developer.usernotifications.time-sensitive": true
       },
       "infoPlist": {
-        "NSAlarmKitUsageDescription": "Bob rings a real alarm when you stay in a distracting app past your countdown."
+        "NSAlarmKitUsageDescription": "Kip rings a real alarm when you stay in a distracting app past your countdown."
       }
     },
     "android": {
@@ -48,8 +48,8 @@
           "widgets": [
             {
               "name": "BobWidget",
-              "displayName": "Bob",
-              "description": "Bob, your streak and today's nudge.",
+              "displayName": "Kip",
+              "description": "Kip, your streak and today's nudge.",
               "ios": {
                 "supportedFamilies": [
                   "systemSmall",
@@ -67,9 +67,9 @@
         {
           "widgets": [
             {
-              "name": "Bob",
-              "label": "Bob",
-              "description": "Bob, your streak and today's nudge.",
+              "name": "Kip",
+              "label": "Kip",
+              "description": "Kip, your streak and today's nudge.",
               "minWidth": "180dp",
               "minHeight": "110dp",
               "targetCellWidth": 3,

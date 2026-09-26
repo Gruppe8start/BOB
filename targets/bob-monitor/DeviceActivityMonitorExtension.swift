@@ -75,7 +75,7 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
     case "Brutal": body = "\(minutes) minutes. Scrolling. I did the math on what that was worth."
     default: body = "\(minutes) min on distracting apps instead of studying. Just saying."
     }
-    post(title: "Bob noticed.", body: body, timeSensitive: false)
+    post(title: "Kip noticed.", body: body, timeSensitive: false)
   }
 
   private func post(title: String, body: String, timeSensitive: Bool) {

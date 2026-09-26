@@ -21,7 +21,7 @@ class WatchConfig : Record {
   @Field val cooldownMinutes: Int = 10
   @Field val alarmEnabled: Boolean = true
   @Field val alarmTitle: String = "Close it."
-  @Field val alarmBody: String = "Bob said close {app}."
+  @Field val alarmBody: String = "Kip said close {app}."
 }
 
 class BobNativeModule : Module() {

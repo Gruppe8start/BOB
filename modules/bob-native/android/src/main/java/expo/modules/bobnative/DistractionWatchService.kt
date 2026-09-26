@@ -194,7 +194,7 @@ class DistractionWatchService : Service() {
   private fun createChannels() {
     val nm = getSystemService(NotificationManager::class.java)
     nm.createNotificationChannel(
-      NotificationChannel(WATCH_CHANNEL, "Bob is watching", NotificationManager.IMPORTANCE_MIN)
+      NotificationChannel(WATCH_CHANNEL, "Kip is watching", NotificationManager.IMPORTANCE_MIN)
     )
     nm.createNotificationChannel(
       NotificationChannel(ALARM_CHANNEL, "Distraction alarm", NotificationManager.IMPORTANCE_HIGH).apply {
@@ -212,8 +212,8 @@ class DistractionWatchService : Service() {
     }
     return Notification.Builder(this, WATCH_CHANNEL)
       .setSmallIcon(applicationInfo.icon)
-      .setContentTitle("Bob is keeping an eye on your distracting apps")
-      .setContentText("Countdown: ${config.countdownMs / 1000}s · Turn off in BOB")
+      .setContentTitle("Kip is keeping an eye on your distracting apps")
+      .setContentText("Countdown: ${config.countdownMs / 1000}s · Turn off in Kip")
       .setContentIntent(open)
       .setOngoing(true)
       .build()

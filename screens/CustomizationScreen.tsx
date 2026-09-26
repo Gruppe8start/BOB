@@ -19,7 +19,7 @@ const STUDY_LEVELS = ['High School', 'University', 'Self-taught', 'Other'];
 const REMINDER_MODES = [
   { label: 'Chill', sub: 'gentle nudges' },
   { label: 'Firm', sub: 'regular check-ins' },
-  { label: 'Brutal', sub: "Bob doesn't hold back" },
+  { label: 'Brutal', sub: "Kip doesn't hold back" },
 ];
 const DISTRACTING_APPS = ['Instagram', 'TikTok', 'YouTube', 'Twitter/X', 'Snapchat', 'WhatsApp', 'Reddit', 'Netflix', 'Other'];
 
@@ -54,7 +54,7 @@ export default function CustomizationScreen({ onSave }: Props) {
 
   async function handleSave() {
     if (!name.trim()) {
-      showAlert("Nice try.", "Bob needs to know your name. Fill it in.");
+      showAlert("Nice try.", "Kip needs to know your name. Fill it in.");
       return;
     }
     if (!studyLevel) {
@@ -62,7 +62,7 @@ export default function CustomizationScreen({ onSave }: Props) {
       return;
     }
     if (!reminderMode) {
-      showAlert("Come on.", "Choose how hard Bob should push you.");
+      showAlert("Come on.", "Choose how hard Kip should push you.");
       return;
     }
 
@@ -94,7 +94,7 @@ export default function CustomizationScreen({ onSave }: Props) {
         {/* Header */}
         <View style={styles.header}>
           <BobAvatar size={112} style={styles.bobAvatar} />
-          <Text style={styles.title}>Meet Bob.</Text>
+          <Text style={styles.title}>Meet Kip.</Text>
           <Text style={styles.subtitle}>
             Your brutally honest, passive-aggressive study companion.{'\n'}Let's get you set up.
           </Text>
@@ -114,7 +114,7 @@ export default function CustomizationScreen({ onSave }: Props) {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>How should Bob reach you?</Text>
+          <Text style={styles.label}>How should Kip reach you?</Text>
           <View style={styles.permissionRow}>
             <View style={styles.permissionCopy}>
               <Text style={styles.permissionTitle}>Nudges and check-ins</Text>
@@ -125,7 +125,7 @@ export default function CustomizationScreen({ onSave }: Props) {
           <View style={styles.permissionRow}>
             <View style={styles.permissionCopy}>
               <Text style={styles.permissionTitle}>Opt in to app-usage tracking</Text>
-              <Text style={styles.permissionHint}>Bob sees duration, never search terms or private content.</Text>
+              <Text style={styles.permissionHint}>Kip sees duration, never search terms or private content.</Text>
             </View>
             <Switch
               value={usageTrackingEnabled}
@@ -176,7 +176,7 @@ export default function CustomizationScreen({ onSave }: Props) {
 
         {/* Reminder Mode */}
         <View style={styles.section}>
-          <Text style={styles.label}>How hard should Bob push you?</Text>
+          <Text style={styles.label}>How hard should Kip push you?</Text>
           <View style={styles.cardRow}>
             {REMINDER_MODES.map(mode => (
               <TouchableOpacity
@@ -198,7 +198,7 @@ export default function CustomizationScreen({ onSave }: Props) {
         {/* Distracting Apps */}
         <View style={styles.section}>
           <Text style={styles.label}>Which apps distract you?</Text>
-          <Text style={styles.hint}>Bob will keep an eye on these.</Text>
+          <Text style={styles.hint}>Kip will keep an eye on these.</Text>
           <View style={styles.chipRow}>
             {DISTRACTING_APPS.map(app => (
               <TouchableOpacity

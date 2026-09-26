@@ -14,7 +14,7 @@ import android.widget.TextView
 class BobAlarmActivity : Activity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    val title = intent.getStringExtra(EXTRA_TITLE) ?: "Bob says: close it."
+    val title = intent.getStringExtra(EXTRA_TITLE) ?: "Kip says: close it."
     val body = intent.getStringExtra(EXTRA_BODY) ?: ""
 
     val root = LinearLayout(this).apply {
@@ -23,7 +23,7 @@ class BobAlarmActivity : Activity() {
       setBackgroundColor(Color.rgb(13, 13, 13))
       setPadding(64, 64, 64, 64)
     }
-    // The launcher icon is Bob (assets/icon.png), so reuse it instead of shipping a drawable.
+    // The launcher icon is Kip (assets/icon.png), so reuse it instead of shipping a drawable.
     val size = (144 * resources.displayMetrics.density).toInt()
     root.addView(ImageView(this).apply {
       setImageDrawable(packageManager.getApplicationIcon(packageName))

@@ -10,7 +10,7 @@ struct MonitorConfig: Record {
   @Field var cooldownMinutes: Int = 10
   @Field var alarmEnabled: Bool = true
   @Field var alarmTitle: String = "Close it."
-  @Field var alarmBody: String = "Bob said close it."
+  @Field var alarmBody: String = "Kip said close it."
 }
 
 private func statusString(_ status: AuthorizationStatus) -> String {

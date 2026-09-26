@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 import { ensureNotificationPermission, listenForNudgeTaps, setupNotificationChannels } from './lib/notifications';
 import { KEYS } from './lib/storage';
 import CustomizationScreen from './screens/CustomizationScreen';
-import HomeScreen from './screens/HomeScreen';
+import MainScreen from './screens/MainScreen';
 
 export type BobProfile = {
   name: string;
@@ -49,7 +49,7 @@ export default function App() {
     <>
       <StatusBar style="light" />
       {profile ? (
-        <HomeScreen profile={profile} onProfileChange={handleProfileChange} />
+        <MainScreen profile={profile} onProfileChange={handleProfileChange} />
       ) : (
         <CustomizationScreen onSave={handleProfileSaved} />
       )}

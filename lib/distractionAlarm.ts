@@ -19,7 +19,7 @@ const DEFAULTS: Record<string, AlarmSettings> = {
 };
 
 const ALARM_COPY: Record<string, { title: string; body: string }> = {
-  Chill: { title: 'Hey. Time to close {app}.', body: 'Bob gave you a few minutes. Back to studying?' },
+  Chill: { title: 'Hey. Time to close {app}.', body: 'Kip gave you a few minutes. Back to studying?' },
   Firm: { title: 'Close {app}. Now.', body: 'Countdown’s over. This alarm stops when you leave {app}.' },
   Brutal: { title: 'CLOSE {app}.', body: 'You had your chance. This stops when you do.' },
 };
@@ -103,7 +103,7 @@ export async function applyDistractionWatch(profile: BobProfile, settings: Alarm
 /** Rings the alarm right now (web: on the BOB tab; iOS: AlarmKit in 10 s). */
 export async function testAlarm(): Promise<boolean> {
   if (Platform.OS === 'web') return (await callExtension<{ ok: boolean }>('testAlarm'))?.ok === true;
-  return BobNative ? BobNative.scheduleTestAlarm(10, 'Bob test alarm. Close it.') : false;
+  return BobNative ? BobNative.scheduleTestAlarm(10, 'Kip test alarm. Close it.') : false;
 }
 
 /** Asks for whatever the alarm needs beyond usage access. Returns false if the user said no. */

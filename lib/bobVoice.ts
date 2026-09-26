@@ -11,11 +11,11 @@ type Line = { title: string; body: string };
 
 const LINES: Record<Trigger, Record<ReminderMode, Line[]>> = {
   inactivity: {
-    Chill: [{ title: 'Bob here.', body: 'No pressure, but a short focus block would be nice, {name}.' }],
+    Chill: [{ title: 'Kip here.', body: 'No pressure, but a short focus block would be nice, {name}.' }],
     Firm: [{ title: 'Still there, {name}?', body: "It's been a while. One block. Now." }],
     Brutal: [
       { title: 'Wow, {name}.', body: 'Your books called. They miss you. I told them not to get their hopes up.' },
-      { title: 'Bob is disappointed.', body: 'Not surprised. Just disappointed. Start a block.' },
+      { title: 'Kip is disappointed.', body: 'Not surprised. Just disappointed. Start a block.' },
     ],
   },
   streakAtRisk: {
@@ -25,8 +25,8 @@ const LINES: Record<Trigger, Record<ReminderMode, Line[]>> = {
   },
   goalCheckIn: {
     Chill: [{ title: 'Nice work.', body: 'Focus block done. Take a breather.' }],
-    Firm: [{ title: 'Bob checked in.', body: 'Block done. Log it and keep the momentum.' }],
-    Brutal: [{ title: 'Bob checked in.', body: 'You finished a focus block. Please accept this tiny victory.' }],
+    Firm: [{ title: 'Kip checked in.', body: 'Block done. Log it and keep the momentum.' }],
+    Brutal: [{ title: 'Kip checked in.', body: 'You finished a focus block. Please accept this tiny victory.' }],
   },
   distraction: {
     Chill: [{ title: 'Quick check', body: '{minutes} min in {app} today. Maybe time for a study block?' }],

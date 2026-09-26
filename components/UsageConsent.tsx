@@ -20,7 +20,7 @@ const NEVER = [
 /** Explicit opt-in shown before any OS usage-tracking permission is requested. */
 export default function UsageConsent({ visible, onAccept, onDecline }: Props) {
   const nextStep = isWeb
-    ? "Next, you'll install the BOB browser extension. Your browser shows exactly what it can access before you confirm."
+    ? "Next, you'll install the Kip browser extension. Your browser shows exactly what it can access before you confirm."
     : `Next, your phone will ask for ${Platform.OS === 'ios' ? 'Screen Time' : 'Usage Access'} permission. That prompt comes from the system and can't be skipped.`;
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onDecline}>
@@ -28,16 +28,16 @@ export default function UsageConsent({ visible, onAccept, onDecline }: Props) {
         <View style={styles.sheet}>
           <ScrollView>
             <BobAvatar size={80} style={styles.face} />
-            <Text style={styles.title}>Let Bob check on you?</Text>
+            <Text style={styles.title}>Let Kip check on you?</Text>
             <Text style={styles.lead}>
               This is you keeping an eye on yourself. Nobody else sees it. You can turn it off any time,
               here or in system settings.
             </Text>
 
-            <Text style={styles.heading}>BOB WILL SEE</Text>
+            <Text style={styles.heading}>KIP WILL SEE</Text>
             {SEES.map(line => <Text key={line} style={styles.item}>✓  {line}</Text>)}
 
-            <Text style={styles.heading}>BOB WILL NEVER SEE</Text>
+            <Text style={styles.heading}>KIP WILL NEVER SEE</Text>
             {NEVER.map(line => <Text key={line} style={styles.item}>✕  {line}</Text>)}
 
             <Text style={styles.note}>{nextStep}</Text>

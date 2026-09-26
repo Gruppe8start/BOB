@@ -8,6 +8,9 @@ export const KEYS = {
   nudgeStats: 'bob_nudge_stats',
   alarmSettings: 'bob_alarm_settings',
   usageConsent: 'bob_usage_consent',
+  sessionTemplates: 'bob_session_templates',
+  sessionLogs: 'bob_session_logs',
+  usageHistory: 'bob_usage_history',
 } as const;
 
 export async function readJson<T>(key: string, fallback: T): Promise<T> {

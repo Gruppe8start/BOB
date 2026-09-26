@@ -41,7 +41,7 @@ if (Platform.OS !== 'web') {
 export async function setupNotificationChannels() {
   if (Platform.OS !== 'android') return;
   await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
-    name: 'Bob nudges',
+    name: 'Kip nudges',
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 200, 120, 200],
     lightColor: '#4CAF50',
@@ -119,7 +119,7 @@ async function scheduleNudge(title: string, body: string, trigger: Trigger, fire
       title,
       body,
       data: { tag: NUDGE_TAG, trigger },
-      // Rich notification: Bob's face as a large attachment on iOS.
+      // Rich notification: Kip's face as a large attachment on iOS.
       attachments: attachmentUri ? [{ identifier: 'bob', url: attachmentUri, type: 'image' }] : undefined,
     },
     trigger: {
@@ -198,7 +198,7 @@ function settleFiredNudges(stats: NudgeStats, now: number): NudgeStats {
 }
 
 /**
- * Cancels Bob's pending nudges and schedules the next ~48h worth, respecting the
+ * Cancels Kip's pending nudges and schedules the next ~48h worth, respecting the
  * per-day cap and backing off when the user keeps ignoring them. Call it whenever
  * the app is opened or the user finishes a study block.
  */
