@@ -261,6 +261,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
         return { ok: true };
       }
+      case 'clearData':
+        // "Delete all my data" in Kip: forget tracked usage and settings, stop any alarm.
+        await withState(async state => {
+          if (state.ringingTabId !== null) await stopRinging(state);
+          await chrome.alarms.clear(COUNTDOWN_ALARM);
+          Object.assign(state, structuredClone(DEFAULT_STATE));
+        });
+        return { ok: true };
       case 'closeTab':
         if (sender.tab?.id !== undefined) await chrome.tabs.remove(sender.tab.id);
         return { ok: true };

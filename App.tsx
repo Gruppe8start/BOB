@@ -51,7 +51,7 @@ export default function App() {
     <>
       <StatusBar style="light" />
       {profile ? (
-        <MainScreen profile={profile} onProfileChange={handleProfileChange} />
+        <MainScreen profile={profile} onProfileChange={handleProfileChange} onReset={() => setProfile(null)} />
       ) : (
         <CustomizationScreen onSave={handleProfileSaved} />
       )}

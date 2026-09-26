@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BobProfile } from '../App';
+import DataPanel from '../components/DataPanel';
 import KipAvatar from '../components/KipAvatar';
 import LookPanel from '../components/LookPanel';
 import PersonalityPanel from '../components/PersonalityPanel';
@@ -19,9 +20,10 @@ type Props = {
   onProfileChange: (profile: BobProfile) => void;
   onPermissionsChanged: () => void;
   onCalendarChanged: () => void;
+  onDataDeleted: () => void;
 };
 
-export default function SettingsScreen({ profile, streak, onProfileChange, onPermissionsChanged, onCalendarChanged }: Props) {
+export default function SettingsScreen({ profile, streak, onProfileChange, onPermissionsChanged, onCalendarChanged, onDataDeleted }: Props) {
   const { subscription, ent, openPlans } = useKip();
   const [calendarOn, setCalendarOn] = useState(false);
 
@@ -111,6 +113,9 @@ export default function SettingsScreen({ profile, streak, onProfileChange, onPer
           onProfileChange={onProfileChange}
           onPermissionsChanged={onPermissionsChanged}
         />
+
+        <Text style={styles.sectionTitle}>Your data</Text>
+        <DataPanel onDeleted={onDataDeleted} />
       </ScrollView>
     </SafeAreaView>
   );

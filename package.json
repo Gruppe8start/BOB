@@ -24,6 +24,9 @@
     "@types/react": "~19.2.2",
     "typescript": "~6.0.3"
   },
+  "overrides": {
+    "@expo/require-utils": "~57.0.5"
+  },
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",

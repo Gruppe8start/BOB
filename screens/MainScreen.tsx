@@ -27,12 +27,14 @@ import StatsScreen from './StatsScreen';
 type Props = {
   profile: BobProfile;
   onProfileChange: (profile: BobProfile) => void;
+  /** All data was deleted: go back to onboarding. */
+  onReset: () => void;
 };
 
 type Tab = 'home' | 'stats' | 'sage' | 'settings';
 
 /** Holds the shared day state and the bottom menu. All tabs stay mounted so a running session keeps ticking. */
-export default function MainScreen({ profile, onProfileChange }: Props) {
+export default function MainScreen({ profile, onProfileChange, onReset }: Props) {
   const [tab, setTab] = useState<Tab>('home');
   const [showPlans, setShowPlans] = useState(false);
   const [streak, setStreak] = useState<StreakState>({ count: 0, lastStudyDay: null });
@@ -209,6 +211,7 @@ export default function MainScreen({ profile, onProfileChange }: Props) {
             onProfileChange={onProfileChange}
             onPermissionsChanged={syncOutside}
             onCalendarChanged={syncOutside}
+            onDataDeleted={onReset}
           />
         </View>
 

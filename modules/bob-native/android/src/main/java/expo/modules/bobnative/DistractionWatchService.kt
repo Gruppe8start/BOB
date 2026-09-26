@@ -29,6 +29,9 @@ import org.json.JSONObject
  *  - The user leaves it before the countdown ends -> countdown is paused, no alarm.
  *  - The countdown ends while still in the app -> a full-screen-intent alarm fires and
  *    rings until the user leaves the app.
+ *  - Locking the phone is not leaving the app: the countdown keeps running and the alarm keeps
+ *    ringing, shown full screen on the lock screen. Only switching to another app (or home, or
+ *    Kip) stops it. Kip's own alarm screen doesn't count as switching.
  *  - Cooldown: for N minutes after an alarm (or after leaving mid-countdown), re-opening a
  *    distracting app does not get a fresh countdown. After an alarm it rings immediately;
  *    after a paused countdown it resumes where it left off.
@@ -38,7 +41,9 @@ class DistractionWatchService : Service() {
   private lateinit var config: Config
 
   private var foregroundPackage: String? = null
+  private var screenLocked = false
   private var lastQueryAt = 0L
+  private var alarmBody = ""
 
   private var countdownEndsAt: Long? = null
   private var pausedRemainingMs: Long? = null
@@ -104,17 +109,26 @@ class DistractionWatchService : Service() {
     val now = System.currentTimeMillis()
     val events = usm.queryEvents(lastQueryAt, now)
     val event = UsageEvents.Event()
+    val wasLocked = screenLocked
     while (events.hasNextEvent()) {
       events.getNextEvent(event)
       when (event.eventType) {
-        UsageAccess.RESUMED -> foregroundPackage = event.packageName
-        UsageAccess.SCREEN_NON_INTERACTIVE, UsageAccess.KEYGUARD_SHOWN -> foregroundPackage = null
+        UsageAccess.RESUMED ->
+          // Kip's own full-screen alarm is not "switching away" from the distracting app.
+          if (event.packageName != packageName || event.className != BobAlarmActivity::class.java.name) {
+            foregroundPackage = event.packageName
+          }
+        UsageAccess.SCREEN_NON_INTERACTIVE, UsageAccess.KEYGUARD_SHOWN -> screenLocked = true
+        UsageAccess.SCREEN_INTERACTIVE, UsageAccess.KEYGUARD_HIDDEN -> screenLocked = false
       }
     }
     lastQueryAt = now
 
     val inDistraction = foregroundPackage?.let { it in config.packages } == true
     if (inDistraction) onInDistraction(now) else onOutOfDistraction(now)
+
+    // Locked while ringing: post the alarm again so Android shows it full screen.
+    if (ringtone != null && screenLocked && !wasLocked) postAlarmNotification()
   }
 
   private fun onInDistraction(now: Long) {
@@ -146,26 +160,35 @@ class DistractionWatchService : Service() {
     pausedRemainingMs = null
     lastFiredAt = now
     val appLabel = foregroundPackage?.let { config.labels[it] } ?: "that app"
-    val body = config.alarmBody.replace("{app}", appLabel)
+    alarmBody = config.alarmBody.replace("{app}", appLabel)
+    postAlarmNotification()
+    startRinging()
+  }
 
+  /**
+   * Android shows a full-screen intent as a full screen only while the phone is locked or the
+   * screen is off; while in use it appears as a heads-up banner.
+   */
+  private fun postAlarmNotification() {
+    val alarmScreen = Intent(this, BobAlarmActivity::class.java)
+      .putExtra(BobAlarmActivity.EXTRA_TITLE, config.alarmTitle)
+      .putExtra(BobAlarmActivity.EXTRA_BODY, alarmBody)
+      .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     val fullScreen = PendingIntent.getActivity(
-      this, 0,
-      Intent(this, BobAlarmActivity::class.java)
-        .putExtra(BobAlarmActivity.EXTRA_TITLE, config.alarmTitle)
-        .putExtra(BobAlarmActivity.EXTRA_BODY, body)
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+      this, 0, alarmScreen, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
     val notification = Notification.Builder(this, ALARM_CHANNEL)
       .setSmallIcon(applicationInfo.icon)
       .setContentTitle(config.alarmTitle)
-      .setContentText(body)
+      .setContentText(alarmBody)
       .setCategory(Notification.CATEGORY_ALARM)
       .setFullScreenIntent(fullScreen, true)
+      .setContentIntent(fullScreen)
       .setOngoing(true)
       .build()
-    getSystemService(NotificationManager::class.java).notify(ALARM_NOTIFICATION_ID, notification)
-    startRinging()
+    val nm = getSystemService(NotificationManager::class.java)
+    nm.cancel(ALARM_NOTIFICATION_ID)
+    nm.notify(ALARM_NOTIFICATION_ID, notification)
   }
 
   private fun startRinging() {

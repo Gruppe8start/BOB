@@ -14,8 +14,10 @@ object UsageAccess {
   const val RESUMED = 1
   const val PAUSED = 2
   const val STOPPED = 23
+  const val SCREEN_INTERACTIVE = 15
   const val SCREEN_NON_INTERACTIVE = 16
   const val KEYGUARD_SHOWN = 17
+  const val KEYGUARD_HIDDEN = 18
 
   fun hasAccess(context: Context): Boolean {
     val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager

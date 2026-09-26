@@ -164,7 +164,7 @@ export default function ReachPanel({ profile, streak, onProfileChange, onPermiss
             ? isWeb
               ? 'Install the Kip browser extension (Chrome or Edge) so Kip can see your tabs.'
               : Platform.OS === 'android'
-                ? 'Grant Usage Access to Kip in system settings.'
+                ? 'Grant Usage Access to Kip in system settings. Switch greyed out? Settings → Apps → Kip → ⋮ → Allow restricted settings, then try again.'
                 : 'Allow Screen Time access.'
             : 'On. Duration only, never content or searches.';
 
@@ -177,7 +177,7 @@ export default function ReachPanel({ profile, streak, onProfileChange, onPermiss
           ? 'AlarmKit: rings through Silent and Focus once you pass the countdown in your distracting apps.'
           : 'Needs iOS 26 for a real alarm. On this iPhone Kip sends a time-sensitive notification instead.'
         : fullScreenOk
-          ? 'Rings until you leave the app. Reopen it during the cooldown and it rings again right away.'
+          ? 'Rings until you switch to another app. Locking the phone doesn’t count: Kip takes over the lock screen. Reopen it during the cooldown and it rings again right away.'
           : 'Allow full-screen alerts for the loudest version. Without it Kip uses a heads-up alert.';
 
   return (

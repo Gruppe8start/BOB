@@ -27,7 +27,13 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.READ_CALENDAR"
+      ],
+      "blockedPermissions": [
+        "android.permission.WRITE_CALENDAR"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -88,7 +94,41 @@
         {
           "calendarPermission": "Kip reads your calendar to find exam dates and free time to study. Nothing is changed or uploaded."
         }
-      ]
-    ]
+      ],
+      "./plugins/withWorkManagerFix"
+    ],
+    "extra": {
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "ExpoWidgetsTarget",
+                  "bundleIdentifier": "com.maxschenck.bob.widgets",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.maxschenck.bob"
+                    ]
+                  }
+                },
+                {
+                  "bundleIdentifier": "com.maxschenck.bob.BobMonitor",
+                  "targetName": "BobMonitor",
+                  "entitlements": {
+                    "com.apple.developer.family-controls": true,
+                    "com.apple.security.application-groups": [
+                      "group.com.maxschenck.bob"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "1a79153a-1e0b-4303-873b-0dd258008195"
+      }
+    },
+    "owner": "maxschenck"
   }
 }

@@ -45,6 +45,13 @@ export async function secureSet(key: string, value: unknown) {
   if (!keys.includes(key)) await AsyncStorage.setItem(INDEX_KEY, JSON.stringify([...keys, key]));
 }
 
+/** Every sensitive Sage item, decrypted, for the user's own data export. */
+export async function secureExportAll(): Promise<Record<string, unknown>> {
+  const out: Record<string, unknown> = {};
+  for (const key of await index()) out[key] = await secureGet(key);
+  return out;
+}
+
 /** Deletes every sensitive Sage item (user-initiated deletion, GDPR / Swiss nDSG). */
 export async function secureWipe() {
   const store = secure();
