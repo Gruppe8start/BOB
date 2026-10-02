@@ -27,12 +27,22 @@ Kip lives in the taskbar tray (the frog icon): pause 15 min / 1 h, settings, sta
 - Once a second it reads the foreground window's title and program (`src/activeWindow.js`, Win32 via koffi).
 - Websites are matched by the browser tab title, only in browsers (`src/rules.js`).
 - Programs are matched by their `.exe` name.
-- Full-screen windows that aren't on the list (presentations, games) make Kip hide.
+- Full-screen windows that aren't on the list (presentations, games) make Kip hide when they cover his monitor.
+- With several monitors, Kip runs to whichever one the distracting window is on, and now and then
+  wanders over to the monitor next to his (left/right neighbours only).
 - Everything stays on this computer. Settings are in `%APPDATA%\kip-desktop\settings.json`.
+
+## Kip's animation
+
+Kip is drawn from a sprite sheet, `assets/kip-sprites.png`, described by `assets/kip-sprites.json`
+(frame size, and per animation its row, frame count and speed). Frames face right; Kip is mirrored when
+he walks left. The current sheet is generated from the still `assets/kip.png` with `npm run sprites`,
+which draws animated legs under him. To use hand-drawn frames, replace the PNG and update the JSON to match
+(rows `idle` and `walk` are required).
 
 ## Not yet
 
 - Account / syncing with the phone app (needs the backend).
 - macOS version, installer and code signing.
-- A real walking animation (Kip hops with the still image for now; needs a sprite sheet).
-- Multiple monitors: Kip lives on the primary monitor.
+- Hand-drawn walk frames (the generated legs are a stand-in until there's real art).
+- Monitors stacked above/below each other: Kip runs to them for distractions but doesn't wander there.

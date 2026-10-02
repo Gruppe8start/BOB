@@ -1,16 +1,20 @@
-// Kip on the desktop. Main process sends a status every second; this file turns it into movement.
-const SIZE = 110;
+// Kip on the desktop. There is one overlay per monitor; Kip is only "here" on one of them at a time.
+// Main process sends a status every second; this file turns it into movement.
+const SIZE = 130;
 const WALK_SPEED = 90; // px/s while wandering
 const RUSH_SPEED = 420; // px/s when heading for a distracting window
 const ALARM_SCALE = { Chill: 1.5, Firm: 1.9, Brutal: 2.5 };
+const WANDER_AWAY_CHANCE = 0.12; // chance a new wander target is the next monitor over
 
 const kipEl = document.getElementById('kip');
-const imgEl = document.getElementById('kipImg');
+const spriteEl = document.getElementById('sprite');
 const bubble = document.getElementById('bubble');
 
 let ground = { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
+let neighbors = { left: false, right: false };
+let here = false;
 let status = { phase: 'idle', mode: 'Firm', sound: true };
-const frog = { x: 200, y: 0, scale: 1, tx: 200, ty: 0, restUntil: 0 };
+const frog = { x: 200, y: 0, scale: 1, facing: 1, tx: 200, ty: 0, restUntil: 0, leaving: null };
 let bubbleUntil = 0;
 let nextQuipAt = Date.now() + 90_000;
 
@@ -21,6 +25,29 @@ function say(text, kind = '', ms = 4500) {
   bubble.textContent = text;
   bubble.className = `show ${kind}`;
   bubbleUntil = ms === Infinity ? Infinity : Date.now() + ms;
+}
+
+// ---- sprite sheet (assets/kip-sprites.png, see scripts/make-sprites.js) ----
+let sheet = null;
+const anim = { name: 'idle', time: 0 };
+
+function useSheet(url, meta) {
+  sheet = meta;
+  spriteEl.style.backgroundImage = `url("${url}")`;
+  spriteEl.style.backgroundSize = `${meta.columns * SIZE}px ${meta.rows * SIZE}px`;
+}
+
+/** Advances the current animation; `rate` speeds it up (e.g. running). */
+function animate(name, dt, rate = 1) {
+  if (!sheet) return;
+  if (anim.name !== name) {
+    anim.name = name;
+    anim.time = 0;
+  }
+  anim.time += dt * rate;
+  const a = sheet.animations[name];
+  const index = Math.floor(anim.time * a.fps) % a.frames;
+  spriteEl.style.backgroundPosition = `${-index * SIZE}px ${-a.row * SIZE}px`;
 }
 
 // ---- alarm sound (Web Audio, no files) ----
@@ -48,19 +75,55 @@ function stopBeeping() {
   beepTimer = null;
 }
 
-// ---- status from main ----
-window.kip.onInit(({ ground: g, kipUrl }) => {
-  ground = g;
-  imgEl.src = kipUrl;
-  frog.x = frog.tx = g.x + g.width * 0.75;
-  frog.y = frog.ty = floorY();
+// ---- arriving on / leaving this monitor ----
+function arrive(from) {
+  here = true;
+  frog.leaving = null;
+  frog.scale = 1;
+  frog.ty = floorY();
+  if (from === 'left' || from === 'right') {
+    // Walk in from the edge that faces the monitor he came from.
+    frog.x = from === 'left' ? ground.x - SIZE : ground.x + ground.width;
+    frog.y = floorY();
+    frog.tx = from === 'left' ? ground.x + 120 : ground.x + ground.width - SIZE - 120;
+  } else {
+    // No monitor side by side (stacked, or first start): drop in from above.
+    frog.x = frog.tx = from === 'start' ? ground.x + ground.width * 0.75 : ground.x + Math.random() * (ground.width - SIZE);
+    frog.y = from === 'start' ? floorY() : ground.y - SIZE;
+  }
+  frog.restUntil = Date.now() + 1500;
   kipEl.classList.remove('hidden');
-  say('Hi. I’ll be down here. Watching.', '', 5000);
+}
+
+function depart() {
+  here = false;
+  frog.leaving = null;
+  stopBeeping();
+  bubbleUntil = 0;
+  bubble.classList.remove('show');
+  kipEl.classList.add('hidden');
+  window.kip.setHover(false);
+}
+
+// ---- messages from main ----
+window.kip.onInit(({ ground: g, neighbors: n, sheetUrl, sheetMeta, here: isHere, greet }) => {
+  ground = g;
+  neighbors = n;
+  useSheet(sheetUrl, sheetMeta);
+  if (isHere) {
+    arrive('start');
+    if (greet) say('Hi. I’ll be down here. Watching.', '', 5000);
+  }
 });
 
+window.kip.onEnter(({ from }) => arrive(from));
+window.kip.onLeave(() => depart());
+
 window.kip.onStatus(next => {
+  if (!here) return;
   const prev = status.phase;
   status = next;
+  if (next.phase !== 'idle') frog.leaving = null; // something came up: stay on this monitor
 
   if (next.phase === 'alarm') {
     const t = next.target;
@@ -103,23 +166,39 @@ window.kip.onStatus(next => {
 });
 
 // ---- hover / poke: only Kip himself catches the mouse ----
-imgEl.addEventListener('mouseenter', () => window.kip.setHover(true));
-imgEl.addEventListener('mouseleave', () => window.kip.setHover(false));
-imgEl.addEventListener('dblclick', () => window.kip.openSettings());
-imgEl.addEventListener('click', async () => {
+spriteEl.addEventListener('mouseenter', () => window.kip.setHover(true));
+spriteEl.addEventListener('mouseleave', () => window.kip.setHover(false));
+spriteEl.addEventListener('dblclick', () => window.kip.openSettings());
+spriteEl.addEventListener('click', async () => {
   if (status.phase === 'idle') say(await window.kip.line('poke'), '', 3000);
 });
 
 // ---- movement loop ----
 let last = performance.now();
 function frame(nowPerf) {
+  requestAnimationFrame(frame);
   const dt = Math.min(0.05, (nowPerf - last) / 1000);
   last = nowPerf;
+  if (!here) return;
   const now = Date.now();
+  const arrived = Math.abs(frog.tx - frog.x) < 2 && Math.abs(frog.ty - frog.y) < 2;
 
-  if (status.phase === 'idle' && now > frog.restUntil && Math.abs(frog.tx - frog.x) < 2 && Math.abs(frog.ty - frog.y) < 2) {
-    // Pick a new spot on the floor, then rest there a bit.
-    frog.tx = ground.x + Math.random() * Math.max(1, ground.width - SIZE);
+  if (frog.leaving && arrived) {
+    // Walked off the edge: main hands Kip to the monitor on that side.
+    const side = frog.leaving;
+    depart();
+    window.kip.exit(side);
+    return;
+  }
+  if (status.phase === 'idle' && now > frog.restUntil && arrived) {
+    // Pick a new spot on the floor (sometimes on the next monitor), then rest there a bit.
+    const sides = ['left', 'right'].filter(s => neighbors[s]);
+    if (sides.length && Math.random() < WANDER_AWAY_CHANCE) {
+      frog.leaving = sides[Math.floor(Math.random() * sides.length)];
+      frog.tx = frog.leaving === 'left' ? ground.x - SIZE - 4 : ground.x + ground.width + 4;
+    } else {
+      frog.tx = ground.x + Math.random() * Math.max(1, ground.width - SIZE);
+    }
     frog.ty = floorY();
     frog.restUntil = now + 2000 + Math.random() * 5000;
   }
@@ -138,13 +217,16 @@ function frame(nowPerf) {
     const step = Math.min(dist, speed * dt);
     frog.x += (dx / dist) * step;
     frog.y += (dy / dist) * step;
+    if (Math.abs(dx) > 1) frog.facing = dx < 0 ? -1 : 1;
   }
 
-  kipEl.classList.toggle('walk', moving && status.phase !== 'paused');
+  const walking = moving && status.phase !== 'paused';
+  animate(walking ? 'walk' : 'idle', dt, walking ? Math.min(2.5, speed / WALK_SPEED) : 1);
   kipEl.classList.toggle('tap', !moving && status.phase === 'countdown');
   kipEl.classList.toggle('angry', status.phase === 'alarm');
   kipEl.classList.toggle('sleep', status.phase === 'paused');
-  kipEl.style.transform = `translate(${frog.x}px, ${frog.y}px) scale(${frog.scale})`;
+  // The sheet faces right; mirror him when he walks left.
+  kipEl.style.transform = `translate(${frog.x}px, ${frog.y}px) scale(${frog.scale * frog.facing}, ${frog.scale})`;
 
   // Bubble sits above Kip (below him if he's near the top of the screen).
   if (bubbleUntil !== Infinity && now > bubbleUntil) bubble.classList.remove('show');
@@ -157,7 +239,5 @@ function frame(nowPerf) {
   bx = Math.max(8, Math.min(window.innerWidth - bw - 8, bx));
   bubble.style.left = `${bx}px`;
   bubble.style.top = `${by}px`;
-
-  requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

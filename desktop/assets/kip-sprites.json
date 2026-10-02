@@ -1,0 +1,17 @@
+{
+  "frame": 256,
+  "columns": 8,
+  "rows": 2,
+  "animations": {
+    "idle": {
+      "row": 0,
+      "frames": 4,
+      "fps": 3
+    },
+    "walk": {
+      "row": 1,
+      "frames": 8,
+      "fps": 10
+    }
+  }
+}

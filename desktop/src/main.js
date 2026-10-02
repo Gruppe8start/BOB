@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
 const { app, BrowserWindow, Menu, Tray, ipcMain, nativeImage, screen } = require('electron');
@@ -17,8 +18,15 @@ const { loadSettings, saveSettings } = require('./settings');
 
 const ASSETS = path.join(__dirname, '..', 'assets');
 const TICK_MS = 1000;
+const SPRITES = {
+  url: pathToFileURL(path.join(ASSETS, 'kip-sprites.png')).href,
+  meta: JSON.parse(fs.readFileSync(path.join(ASSETS, 'kip-sprites.json'), 'utf8')),
+};
 
-let overlay = null;
+// One transparent overlay per monitor. Kip is on exactly one of them (kipDisplayId) at a time.
+const overlays = new Map();
+let kipDisplayId = null;
+let greeted = false;
 let settingsWindow = null;
 let tray = null;
 let settings = null;
@@ -37,10 +45,31 @@ if (!app.requestSingleInstanceLock()) app.quit();
 // Starting Kip while he's already running opens his settings.
 app.on('second-instance', () => openSettings());
 
-function createOverlay() {
-  const display = screen.getPrimaryDisplay();
+/** The monitor directly left/right of `display` (sharing some height with it), if any. */
+function neighbor(display, side) {
+  const b = display.bounds;
+  // Mixed DPI can leave small gaps/overlaps between monitors in DIP coordinates.
+  const SLACK = 16;
+  const beside = screen.getAllDisplays().filter(d =>
+    d.id !== display.id &&
+    d.bounds.y < b.y + b.height && d.bounds.y + d.bounds.height > b.y &&
+    (side === 'right' ? d.bounds.x >= b.x + b.width - SLACK : d.bounds.x + d.bounds.width <= b.x + SLACK)
+  );
+  const gap = d => (side === 'right' ? d.bounds.x - (b.x + b.width) : b.x - (d.bounds.x + d.bounds.width));
+  return beside.sort((p, q) => gap(p) - gap(q))[0] ?? null;
+}
+
+function displayById(id) {
+  return screen.getAllDisplays().find(d => d.id === id) ?? null;
+}
+
+function kipOverlay() {
+  return overlays.get(kipDisplayId) ?? null;
+}
+
+function createOverlay(display) {
   const { x, y, width, height } = display.bounds;
-  overlay = new BrowserWindow({
+  const overlay = new BrowserWindow({
     x, y, width, height,
     transparent: true,
     frame: false,
@@ -63,12 +92,57 @@ function createOverlay() {
   overlay.loadFile(path.join(__dirname, 'overlay.html'));
   overlay.webContents.on('did-finish-load', () => {
     const wa = display.workArea;
+    const here = display.id === kipDisplayId;
     overlay.webContents.send('init', {
       ground: { x: wa.x - x, y: wa.y - y, width: wa.width, height: wa.height },
-      kipUrl: pathToFileURL(path.join(ASSETS, 'kip.png')).href,
+      neighbors: { left: !!neighbor(display, 'left'), right: !!neighbor(display, 'right') },
+      sheetUrl: SPRITES.url,
+      sheetMeta: SPRITES.meta,
+      here,
+      greet: here && !greeted,
       settings,
     });
+    if (here) greeted = true;
   });
+  overlay.webContents.on('console-message', event => {
+    if (event.level === 'warning' || event.level === 'error') console.log('[overlay]', event.message);
+  });
+  return overlay;
+}
+
+/** (Re)creates one overlay per monitor. Kip stays on his monitor if it's still connected. */
+function createOverlays() {
+  for (const win of overlays.values()) if (!win.isDestroyed()) win.destroy();
+  overlays.clear();
+  const displays = screen.getAllDisplays();
+  if (!displays.some(d => d.id === kipDisplayId)) kipDisplayId = screen.getPrimaryDisplay().id;
+  for (const display of displays) overlays.set(display.id, createOverlay(display));
+}
+
+let rebuildTimer = null;
+function rebuildOverlaysSoon() {
+  // Plugging in a monitor fires several events in a row; rebuild once they settle.
+  clearTimeout(rebuildTimer);
+  rebuildTimer = setTimeout(createOverlays, 800);
+}
+
+/** Moves Kip to another monitor. He walks in from the side facing the one he left. */
+function moveKipTo(displayId) {
+  if (displayId === kipDisplayId || !overlays.has(displayId)) return;
+  const from = displayById(kipDisplayId);
+  const to = displayById(displayId);
+  const old = kipOverlay();
+  if (old && !old.isDestroyed()) {
+    old.webContents.send('leave');
+    old.setIgnoreMouseEvents(true, { forward: true });
+  }
+  kipDisplayId = displayId;
+  let side = 'top';
+  if (from && to) {
+    if (to.bounds.x >= from.bounds.x + from.bounds.width - 16) side = 'left';
+    else if (to.bounds.x + to.bounds.width <= from.bounds.x + 16) side = 'right';
+  }
+  kipOverlay().webContents.send('enter', { from: side });
 }
 
 /** Windows won't let a background app take focus; pinning on top for a moment brings it forward. */
@@ -142,21 +216,28 @@ function refreshTray() {
   ]));
 }
 
-/** Window rect in overlay coordinates (DIP), clamped onto the overlay's display. */
-function toOverlayRect(rect) {
+/** The monitor a window (physical-pixel rect) is mostly on, and the rect in that monitor's DIP. */
+function locate(rect) {
   const dip = screen.screenToDipRect(null, rect);
-  const b = overlay.getBounds();
+  return { dip, display: screen.getDisplayMatching(dip) };
+}
+
+/** Window rect in overlay coordinates (DIP), clamped onto its monitor's overlay. */
+function toOverlayRect({ dip, display }) {
+  const b = display.bounds;
   const x = Math.max(0, Math.min(b.width - 80, dip.x - b.x));
   const y = Math.max(0, Math.min(b.height - 80, dip.y - b.y));
   return { x, y, width: Math.min(dip.width, b.width - x), height: Math.min(dip.height, b.height - y) };
 }
 
-function isFullscreen(win) {
+/** True when a full-screen app (not on the list) covers the monitor Kip is on. */
+function coversKip(win) {
   // The desktop itself (explorer.exe) spans the whole screen but isn't a full-screen app.
   if (!win || win.exe === 'explorer.exe' || !win.title) return false;
-  const dip = screen.screenToDipRect(null, win.rect);
-  const d = screen.getDisplayMatching(dip).bounds;
-  return dip.x <= d.x && dip.y <= d.y && dip.x + dip.width >= d.x + d.width && dip.y + dip.height >= d.y + d.height;
+  const { dip, display } = locate(win.rect);
+  const d = display.bounds;
+  return display.id === kipDisplayId &&
+    dip.x <= d.x && dip.y <= d.y && dip.x + dip.width >= d.x + d.width && dip.y + dip.height >= d.y + d.height;
 }
 
 let lastLoggedPhase = null;
@@ -166,11 +247,12 @@ function send(status) {
     lastLoggedPhase = status.phase;
     console.log(`[kip] ${new Date().toLocaleTimeString()} ${status.phase}${status.app ? ` (${status.app})` : ''}`);
   }
+  const overlay = kipOverlay();
   if (overlay && !overlay.isDestroyed()) overlay.webContents.send('status', status);
 }
 
 function tick() {
-  if (!overlay) return;
+  if (!kipOverlay()) return;
   const now = Date.now();
 
   if (now < settings.pausedUntil) {
@@ -208,7 +290,7 @@ function tick() {
     watch.ringing = false;
     watch.wasBusy = false;
     // Presentations, games and full-screen video that aren't on the list: Kip hides.
-    if (isFullscreen(win)) send({ ...base, phase: 'hidden' });
+    if (coversKip(win)) send({ ...base, phase: 'hidden' });
     else send({ ...base, phase: 'idle', text: justLeft ? line('left', settings.mode, vars) : null });
     return;
   }
@@ -228,7 +310,10 @@ function tick() {
     }
   }
 
-  const target = toOverlayRect(win.rect);
+  // Kip goes to whichever monitor the distracting window is on.
+  const where = locate(win.rect);
+  moveKipTo(where.display.id);
+  const target = toOverlayRect(where);
   if (watch.ringing) {
     send({ ...base, phase: 'alarm', app: rule.label, target, text: line('alarm', settings.mode, vars) });
   } else {
@@ -245,8 +330,16 @@ function fire(now) {
   watch.lastFiredAt = now;
 }
 
-ipcMain.on('kip-hover', (_e, hovering) => {
-  if (overlay) overlay.setIgnoreMouseEvents(!hovering, { forward: true });
+ipcMain.on('kip-hover', (e, hovering) => {
+  BrowserWindow.fromWebContents(e.sender)?.setIgnoreMouseEvents(!hovering, { forward: true });
+});
+// Kip wandered off the left/right edge of his monitor: continue on the monitor next to it.
+ipcMain.on('kip-exit', (e, side) => {
+  const overlay = kipOverlay();
+  if (!overlay || e.sender !== overlay.webContents) return;
+  const next = neighbor(displayById(kipDisplayId), side);
+  if (next) moveKipTo(next.id);
+  else overlay.webContents.send('enter', { from: side }); // monitor was unplugged meanwhile: walk back in
 });
 ipcMain.on('open-settings', () => openSettings());
 ipcMain.handle('kip-line', (_e, kind) =>
@@ -257,7 +350,7 @@ ipcMain.handle('save-settings', (_e, next) => {
   settings = { ...settings, ...next };
   saveSettings(settings);
   setStartWithWindows(settings.startWithWindows);
-  if (overlay) overlay.webContents.send('settings', settings);
+  for (const overlay of overlays.values()) overlay.webContents.send('settings', settings);
   refreshTray();
   return settings;
 });
@@ -266,10 +359,8 @@ app.whenReady().then(() => {
   settings = loadSettings();
   // Re-register autostart each launch so the entry always points at this copy of Kip.
   if (settings.startWithWindows) setStartWithWindows(true);
-  createOverlay();
-  overlay.webContents.on('console-message', event => {
-    if (event.level === 'warning' || event.level === 'error') console.log('[overlay]', event.message);
-  });
+  createOverlays();
+  for (const event of ['display-added', 'display-removed', 'display-metrics-changed']) screen.on(event, rebuildOverlaysSoon);
   tray = new Tray(nativeImage.createFromPath(path.join(ASSETS, 'icon16.png')));
   tray.on('click', openSettings);
   refreshTray();

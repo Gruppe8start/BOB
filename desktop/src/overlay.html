@@ -5,14 +5,12 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file:; style-src 'self' 'unsafe-inline'">
 <style>
   html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; user-select: none; }
-  #kip { position: absolute; left: 0; top: 0; width: 110px; height: 110px; transform-origin: 50% 100%; cursor: pointer; transition: opacity 0.4s; }
-  #kip img { width: 100%; height: 100%; display: block; pointer-events: auto; filter: drop-shadow(0 6px 10px rgba(0,0,0,.45)); }
+  #kip { position: absolute; left: 0; top: 0; width: 130px; height: 130px; transform-origin: 50% 100%; cursor: pointer; transition: opacity 0.4s; }
+  #sprite { width: 100%; height: 100%; pointer-events: auto; background-repeat: no-repeat; transform-origin: 50% 100%; filter: drop-shadow(0 6px 10px rgba(0,0,0,.45)); }
   #kip.hidden { opacity: 0; pointer-events: none; }
-  #kip.walk img { animation: hop 0.42s ease-in-out infinite; }
-  #kip.tap img { animation: tap 0.5s ease-in-out infinite; }
-  #kip.angry img { animation: shake 0.12s linear infinite; }
-  #kip.sleep img { animation: breathe 3s ease-in-out infinite; opacity: .85; }
-  @keyframes hop { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-12px) rotate(2deg); } }
+  #kip.tap #sprite { animation: tap 0.5s ease-in-out infinite; }
+  #kip.angry #sprite { animation: shake 0.12s linear infinite; }
+  #kip.sleep #sprite { animation: breathe 3s ease-in-out infinite; opacity: .85; }
   @keyframes tap { 0%,100% { transform: rotate(0); } 50% { transform: rotate(-5deg) translateY(-3px); } }
   @keyframes shake { 0% { transform: translate(0,0) rotate(0); } 25% { transform: translate(-4px,2px) rotate(-3deg); } 50% { transform: translate(3px,-2px) rotate(2deg); } 75% { transform: translate(-2px,-3px) rotate(-1deg); } 100% { transform: translate(0,0) rotate(0); } }
   @keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
@@ -25,7 +23,7 @@
 </style>
 </head>
 <body>
-  <div id="kip" class="hidden"><img id="kipImg" alt="Kip" draggable="false"></div>
+  <div id="kip" class="hidden"><div id="sprite" role="img" aria-label="Kip"></div></div>
   <div id="bubble"></div>
   <script src="overlay.js"></script>
 </body>
